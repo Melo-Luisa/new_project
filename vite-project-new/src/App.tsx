@@ -10,6 +10,18 @@ function App() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selecionados, setSelecionados] = useState<number[]>([]);
+
+
+  function toggleSelecionado(id: number) {
+    if (selecionados.includes(id)) {
+      setSelecionados(
+        selecionados.filter((userId) => userId !== id)
+      );
+    } else {
+      setSelecionados([...selecionados, id]);
+    }
+  }
 
   const fetchUsuarios = async () => {
     const res = await fetch("http://localhost:3001/usuarios");
@@ -50,6 +62,24 @@ function App() {
     } finally {
       setLoading(false);
     }
+
+
+  };
+  const deletarUsuarios = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:3001/usuarios/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        alert("Front - Erro ao deletar usuário com ID: " + id );
+        return;
+      }
+      // Atualizamos o estado local sem precisar de um novo GET
+      setUsuarios((prev) => prev.filter((user) => user.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao deletar usuário");
+    }
   };
 
   return (
@@ -69,10 +99,19 @@ function App() {
           {loading ? "Adicionando..." : "Adicionar"}
         </button>
       </div>
+      <button onClick={() => selecionados.forEach((id) => deletarUsuarios(id))}>
+        Deletar Selecionados
+      </button>
 
       <div className="grid">
+        <h2>Usuários Cadastrados</h2>
         {usuarios.map((user) => (
           <div className="card" key={user.id}>
+            <input
+              type="checkbox"
+              checked={selecionados.includes(user.id)}
+              onChange={() => toggleSelecionado(user.id)}
+            />
             <h2>{user.nome}</h2>
             <span>ID: {user.id}</span>
           </div>

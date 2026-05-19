@@ -40,6 +40,23 @@ app.post("/usuarios", async (req, res) => {
   }
 });
 
+app.delete("/usuarios/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await db.query(
+      "DELETE FROM usuarios WHERE id = ?",
+      [id]
+    );
+    if ((result as any).affectedRows === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado - back" });
+    }
+    res.json({ message: "Usuário deletado" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao deletar usuário" });
+  }
+});
+
 
 // SEMPRE por último
 app.listen(3001, () => {
