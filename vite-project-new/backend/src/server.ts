@@ -57,6 +57,26 @@ app.delete("/usuarios/:id", async (req, res) => {
   }
 });
 
+app.put("/usuarios/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome } = req.body;  
+    if (!nome) {
+      return res.status(400).json({ error: "Nome é obrigatório" });
+    }
+    const [result] = await db.query(
+      "UPDATE usuarios SET nome = ? WHERE id = ?",
+      [nome, id]
+    );
+    if ((result as any).affectedRows === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado - back" });
+    }
+    res.json({ message: "Usuário atualizado" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao atualizar usuário" });
+    }
+  });
 
 // SEMPRE por último
 app.listen(3001, () => {

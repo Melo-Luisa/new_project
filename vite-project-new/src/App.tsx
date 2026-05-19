@@ -12,6 +12,10 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [selecionados, setSelecionados] = useState<number[]>([]);
 
+  const [modalAberto, setModalAberto] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+  const [novoNome, setNovoNome] = useState("");
+
 
   function toggleSelecionado(id: number) {
     if (selecionados.includes(id)) {
@@ -21,6 +25,12 @@ function App() {
     } else {
       setSelecionados([...selecionados, id]);
     }
+  }
+
+  function abrirModalEdicao(usuario: Usuario) {
+    setUsuarioEditando(usuario);
+    setNovoNome(usuario.nome);
+    setModalAberto(true);
   }
 
   const fetchUsuarios = async () => {
@@ -81,6 +91,44 @@ function App() {
       alert("Erro ao deletar usuário");
     }
   };
+  // Função para editar usuário
+  const editarUsuario = async () => {
+
+    if (!usuarioEditando) return;
+
+    try {
+
+      const res = await fetch(
+        `http://localhost:3001/usuarios/${usuarioEditando.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nome: novoNome,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Erro ao editar");
+      }
+
+      setUsuarios((prev) =>
+        prev.map((user) =>
+          user.id === usuarioEditando.id
+            ? { ...user, nome: novoNome }
+            : user
+        )
+      );
+
+      setModalAberto(false);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="container">
@@ -102,6 +150,19 @@ function App() {
       <button onClick={() => selecionados.forEach((id) => deletarUsuarios(id))}>
         Deletar Selecionados
       </button>
+      <button
+        onClick={() => {
+
+          const usuario = usuarios.find(
+            (u) => u.id === selecionados[0]
+          );
+
+          if (!usuario) {
+            alert("Selecione um usuário");
+            return;
+          }abrirModalEdicao(usuario);}}>
+        Editar Selecionado
+      </button>
 
       <div className="grid">
         <h2>Usuários Cadastrados</h2>
@@ -116,7 +177,21 @@ function App() {
             <span>ID: {user.id}</span>
           </div>
         ))}
-      </div>
+      </div>  
+      {modalAberto && (
+        <div className="modal">
+          <h2>Editar Usuário</h2>
+          <input
+            value={novoNome}
+            onChange={(e) => setNovoNome(e.target.value)}
+            placeholder="Digite o novo nome..."
+          />
+          <button onClick={editarUsuario} disabled={!novoNome.trim()}>
+            Salvar
+          </button>
+          <button onClick={() => setModalAberto(false)}>Cancelar</button>
+        </div>
+      )}
     </div>
   );
 }
